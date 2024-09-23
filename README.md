@@ -9,6 +9,8 @@ https://camisrutt.github.io/Moodboard/moodboard/main
 - add title editing and saving
   
 - add paint bucket to fill areas with color
+
+- To be able to save the whole calendar to a image file or pdf.
   
 - Create a favorite system where you can favorite certain drawings
   
