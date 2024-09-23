@@ -5,70 +5,141 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mood Board Tracker</title>
     <style>
+        /* Pastel Theme Colors */
+        :root {
+            --background-color: #f8f4ff;
+            --primary-color: #d5c6e0;
+            --secondary-color: #f0e1ff;
+            --accent-color: #9ad3bc;
+            --text-color: #5c5470;
+            --border-color: #d5b8ff;
+            --highlight-color: #ffe9b3;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            background-color: var(--background-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
             text-align: center;
-            margin: 10px;
-            padding: 0;
         }
+
         h1 {
-            font-size: 1.5em;
-            margin: 10px 0;
+            font-size: 2em;
+            color: var(--primary-color);
+            margin-bottom: 20px;
         }
+
         canvas {
-            border: 1px solid black;
-            margin: 10px auto;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 15px auto;
             display: block;
             width: 100%;
-            max-width: 300px;
-            height: 300px;
+            max-width: 320px;
+            height: 320px;
         }
+
         .controls {
-            margin: 10px 0;
+            margin: 20px 0;
         }
+
         .controls input, .controls button {
+            padding: 10px;
             font-size: 1em;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
             margin: 5px;
+            width: 90%;
+            max-width: 300px;
         }
+
+        .controls button {
+            cursor: pointer;
+            background-color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+            color: #fff;
+        }
+
+        .controls button:hover {
+            background-color: var(--highlight-color);
+        }
+
         .color-picker {
-            margin: 10px 0;
+            margin: 15px 0;
         }
+
+        .color-picker input {
+            width: 50px;
+            height: 40px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--secondary-color);
+        }
+
         #calendar {
-            margin-top: 20px;
+            margin-top: 30px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
         }
+
         .calendar-day {
-            border: 1px solid #ccc;
-            width: 70px;
-            height: 70px;
+            border: 2px solid var(--border-color);
+            background-color: var(--secondary-color);
+            width: 80px;
+            height: 80px;
             margin: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 10px;
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .calendar-day img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
+
         .calendar-day:hover {
-            border-color: #000;
+            border-color: var(--accent-color);
         }
+
         .calendar-day p {
             position: absolute;
             top: 5px;
             left: 5px;
             margin: 0;
-            font-size: 10px;
-            color: #fff;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 2px;
+            font-size: 12px;
+            color: var(--text-color);
+            background: rgba(255, 255, 255, 0.7);
+            padding: 2px 5px;
+            border-radius: 4px;
         }
+
+        input[type="date"] {
+            font-size: 1em;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            margin-bottom: 20px;
+            max-width: 300px;
+            width: 90%;
+        }
+
     </style>
 </head>
 <body>
@@ -79,7 +150,7 @@
     <canvas id="moodCanvas"></canvas>
     
     <div class="controls">
-        <input type="text" id="moodName" placeholder="Tag your mood (optional)" style="width: 80%;">
+        <input type="text" id="moodName" placeholder="Tag your mood (optional)">
         <button id="saveMood">Save Mood</button>
         <button id="clearCanvas">Clear Canvas</button>
     </div>
@@ -104,9 +175,8 @@
         let drawing = false;
         let penColor = '#000000'; // Default color is black
 
-        // Set up canvas for drawing (both mouse and touch)
-        canvas.width = 300;
-        canvas.height = 300;
+        canvas.width = 320;
+        canvas.height = 320;
 
         function getCoordinates(event) {
             const rect = canvas.getBoundingClientRect();
@@ -115,12 +185,10 @@
             return { x, y };
         }
 
-        // Prevent scrolling on touch
         function preventDefaultTouch(event) {
             event.preventDefault();
         }
 
-        // Start drawing on mouse or touch down
         function startDrawing(event) {
             event.preventDefault();
             drawing = true;
@@ -129,7 +197,6 @@
             ctx.moveTo(x, y);
         }
 
-        // Draw on canvas as user moves finger or mouse
         function draw(event) {
             if (!drawing) return;
             event.preventDefault();
@@ -139,24 +206,20 @@
             ctx.stroke();
         }
 
-        // Stop drawing on mouse or touch up
         function stopDrawing(event) {
             drawing = false;
             ctx.closePath();
             event.preventDefault();
         }
 
-        // Update the pen color when the user selects a new color
         penColorInput.addEventListener('input', (event) => {
             penColor = event.target.value;
         });
 
-        // Clear the canvas
         clearButton.addEventListener('click', () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
 
-        // Save the mood (drawing + tag) by date
         saveButton.addEventListener('click', () => {
             const moodTag = moodNameInput.value || 'Untitled';
             const moodImage = canvas.toDataURL();
@@ -172,17 +235,15 @@
 
             renderCalendar();
 
-            // Clear canvas and input
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             moodNameInput.value = '';
         });
 
-        // Render calendar days
         function renderCalendar() {
             calendar.innerHTML = '';
             for (let i = 1; i <= 31; i++) {
                 const day = i < 10 ? '0' + i : i;
-                const currentMonth = new Date().toISOString().slice(0, 7); // yyyy-mm
+                const currentMonth = new Date().toISOString().slice(0, 7);
                 const fullDate = `${currentMonth}-${day}`;
 
                 const moodData = JSON.parse(localStorage.getItem(fullDate));
@@ -206,7 +267,6 @@
             }
         }
 
-        // View mood on click
         function viewMood(date) {
             const moodData = JSON.parse(localStorage.getItem(date));
             if (moodData) {
@@ -225,24 +285,20 @@
             }
         }
 
-        // Load the calendar on page load
         document.addEventListener('DOMContentLoaded', renderCalendar);
 
-        // Mouse events
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
 
-        // Touch events with scrolling prevention
-        canvas.addEventListener('touchstart', startDrawing, { passive: false });
-        canvas.addEventListener('touchmove', draw, { passive: false });
-        canvas.addEventListener('touchend', stopDrawing, { passive: false });
+        canvas.addEventListener('touchstart', startDrawing, false);
+        canvas.addEventListener('touchmove', draw, false);
+        canvas.addEventListener('touchend', stopDrawing, false);
+        canvas.addEventListener('touchcancel', stopDrawing, false);
 
-        // Prevent default behavior for canvas touch events
-        canvas.addEventListener('touchstart', preventDefaultTouch, { passive: false });
-        canvas.addEventListener('touchmove', preventDefaultTouch, { passive: false });
-        canvas.addEventListener('touchend', preventDefaultTouch, { passive: false });
+        document.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+
     </script>
 </body>
 </html>
