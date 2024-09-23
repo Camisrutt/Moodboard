@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Board Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        canvas {
+            border: 1px solid black;
+            margin: 20px;
+        }
+        .controls {
+            margin-top: 10px;
+        }
+        #calendar {
+            margin-top: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .calendar-day {
+            border: 1px solid #ccc;
+            width: 80px;
+            height: 80px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .calendar-day img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .calendar-day:hover {
+            border-color: #000;
+        }
+        .calendar-day p {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            margin: 0;
+            font-size: 10px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mood Board Tracker</h1>
+
+    <input type="date" id="moodDate">
+    
+    <canvas id="moodCanvas" width="300" height="300"></canvas>
+    
+    <div class="controls">
+        <input type="text" id="moodName" placeholder="Tag your mood (optional)">
+        <button id="saveMood">Save Mood</button>
+        <button id="clearCanvas">Clear Canvas</button>
+    </div>
+
+    <div id="calendar"></div>
+
+    <script>
+        const canvas = document.getElementById('moodCanvas');
+        const ctx = canvas.getContext('2d');
+        const moodNameInput = document.getElementById('moodName');
+        const saveButton = document.getElementById('saveMood');
+        const clearButton = document.getElementById('clearCanvas');
+        const moodDateInput = document.getElementById('moodDate');
+        const calendar = document.getElementById('calendar');
+
+        let drawing = false;
+
+        // Start drawing
+        canvas.addEventListener('mousedown', (e) => {
+            drawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
+        });
+
+        // Draw on canvas
+        canvas.addEventListener('mousemove', (e) => {
+            if (drawing) {
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.stroke();
+            }
+        });
+
+        // Stop drawing
+        canvas.addEventListener('mouseup', () => {
+            drawing = false;
+        });
+
+        // Clear the canvas
+        clearButton.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Save the mood (drawing + tag) by date
+        saveButton.addEventListener('click', () => {
+            const moodTag = moodNameInput.value || 'Untitled';
+            const moodImage = canvas.toDataURL();
+            const moodDate = moodDateInput.value;
+
+            if (!moodDate) {
+                alert('Please select a date!');
+                return;
+            }
+
+            const moodData = { tag: moodTag, image: moodImage };
+            localStorage.setItem(moodDate, JSON.stringify(moodData));
+
+            renderCalendar();
+
+            // Clear canvas and input
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            moodNameInput.value = '';
+        });
+
+        // Render calendar days
+        function renderCalendar() {
+            calendar.innerHTML = '';
+            for (let i = 1; i <= 31; i++) {
+                const day = i < 10 ? '0' + i : i;
+                const currentMonth = new Date().toISOString().slice(0, 7); // yyyy-mm
+                const fullDate = `${currentMonth}-${day}`;
+
+                const moodData = JSON.parse(localStorage.getItem(fullDate));
+
+                const dayDiv = document.createElement('div');
+                dayDiv.classList.add('calendar-day');
+                dayDiv.setAttribute('data-date', fullDate);
+
+                const dayLabel = document.createElement('p');
+                dayLabel.textContent = i;
+                dayDiv.appendChild(dayLabel);
+
+                if (moodData) {
+                    const moodImg = document.createElement('img');
+                    moodImg.src = moodData.image;
+                    dayDiv.appendChild(moodImg);
+                }
+
+                dayDiv.addEventListener('click', () => viewMood(fullDate));
+                calendar.appendChild(dayDiv);
+            }
+        }
+
+        // View mood on click
+        function viewMood(date) {
+            const moodData = JSON.parse(localStorage.getItem(date));
+            if (moodData) {
+                const image = new Image();
+                image.src = moodData.image;
+
+                image.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(image, 0, 0);
+                };
+
+                moodNameInput.value = moodData.tag;
+                moodDateInput.value = date;
+            } else {
+                alert('No mood saved for this date.');
+            }
+        }
+
+        // Load the calendar on page load
+        document.addEventListener('DOMContentLoaded', renderCalendar);
+    </script>
+</body>
+</html>
