@@ -83,8 +83,30 @@
             background-color: var(--secondary-color);
         }
 
+        /* Collapsible Calendar */
+        .calendar-section {
+            margin: 20px 0;
+        }
+
+        .calendar-header {
+            font-size: 1.2em;
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .calendar-header:hover {
+            background-color: var(--highlight-color);
+        }
+
+        .calendar-content {
+            display: none;
+            margin-top: 10px;
+        }
+
         #calendar {
-            margin-top: 30px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
@@ -139,7 +161,6 @@
             max-width: 300px;
             width: 90%;
         }
-
     </style>
 </head>
 <body>
@@ -160,7 +181,13 @@
         <input type="color" id="penColor" value="#000000">
     </div>
 
-    <div id="calendar"></div>
+    <!-- Collapsible calendar section -->
+    <div class="calendar-section">
+        <div class="calendar-header" id="toggleCalendar">Click to View/Edit Full Calendar</div>
+        <div class="calendar-content" id="calendarContent">
+            <div id="calendar"></div>
+        </div>
+    </div>
 
     <script>
         const canvas = document.getElementById('moodCanvas');
@@ -171,27 +198,29 @@
         const moodDateInput = document.getElementById('moodDate');
         const calendar = document.getElementById('calendar');
         const penColorInput = document.getElementById('penColor');
-    
+        const toggleCalendarButton = document.getElementById('toggleCalendar');
+        const calendarContent = document.getElementById('calendarContent');
+
         let drawing = false;
         let penColor = '#000000'; // Default color is black
         let isTouchDevice = 'ontouchstart' in document.documentElement;
-    
+
         canvas.width = 320;
         canvas.height = 320;
-    
+
         function getCoordinates(event) {
             const rect = canvas.getBoundingClientRect();
             const x = (event.touches ? event.touches[0].clientX : event.clientX) - rect.left;
             const y = (event.touches ? event.touches[0].clientY : event.clientY) - rect.top;
             return { x, y };
         }
-    
+
         function preventScrollDuringDrawing(event) {
             if (drawing) {
                 event.preventDefault();
             }
         }
-    
+
         function startDrawing(event) {
             event.preventDefault();
             drawing = true;
@@ -199,7 +228,7 @@
             ctx.beginPath();
             ctx.moveTo(x, y);
         }
-    
+
         function draw(event) {
             if (!drawing) return;
             event.preventDefault();
@@ -208,97 +237,118 @@
             ctx.lineTo(x, y);
             ctx.stroke();
         }
-    
+
         function stopDrawing(event) {
             drawing = false;
             ctx.closePath();
             event.preventDefault();
         }
-    
+
         penColorInput.addEventListener('input', (event) => {
             penColor = event.target.value;
         });
-    
+
         clearButton.addEventListener('click', () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
-    
+
         saveButton.addEventListener('click', () => {
             const moodTag = moodNameInput.value || 'Untitled';
             const moodImage = canvas.toDataURL();
             const moodDate = moodDateInput.value;
-    
+
             if (!moodDate) {
                 alert('Please select a date!');
                 return;
             }
-    
+
             const moodData = { tag: moodTag, image: moodImage };
             localStorage.setItem(moodDate, JSON.stringify(moodData));
-    
+
             renderCalendar();
-    
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             moodNameInput.value = '';
         });
-    
+
         function renderCalendar() {
             calendar.innerHTML = '';
+            const currentMonth = new Date().toISOString().slice(0, 7); // Current month in YYYY-MM format
+            const currentDay = new Date().getDate(); // Current day
+
             for (let i = 1; i <= 31; i++) {
                 const day = i < 10 ? '0' + i : i;
-                const currentMonth = new Date().toISOString().slice(0, 7);
                 const fullDate = `${currentMonth}-${day}`;
-    
+
                 const moodData = JSON.parse(localStorage.getItem(fullDate));
-    
+
                 const dayDiv = document.createElement('div');
                 dayDiv.classList.add('calendar-day');
                 dayDiv.setAttribute('data-date', fullDate);
-    
+
                 const dayLabel = document.createElement('p');
                 dayLabel.textContent = i;
                 dayDiv.appendChild(dayLabel);
-    
+
                 if (moodData) {
                     const moodImg = document.createElement('img');
                     moodImg.src = moodData.image;
                     dayDiv.appendChild(moodImg);
                 }
-    
-                dayDiv.addEventListener('click', () => viewMood(fullDate));
+
+                // Highlight current day
+                if (i == currentDay) {
+                    dayDiv.style.backgroundColor = 'var(--accent-color)';
+                }
+
+                dayDiv.addEventListener('click', () => {
+                    viewMood(fullDate);
+                    moodDateInput.value = fullDate;
+                });
+
                 calendar.appendChild(dayDiv);
             }
         }
-    
+
         function viewMood(date) {
             const moodData = JSON.parse(localStorage.getItem(date));
             if (moodData) {
                 const image = new Image();
                 image.src = moodData.image;
-    
+
                 image.onload = () => {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     ctx.drawImage(image, 0, 0);
                 };
-    
+
                 moodNameInput.value = moodData.tag;
-                moodDateInput.value = date;
             } else {
-                alert('No mood saved for this date.');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                moodNameInput.value = '';
             }
         }
-    
-        document.addEventListener('DOMContentLoaded', renderCalendar);
-    
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCalendar();
+
+            const today = new Date().toISOString().split('T')[0];
+            moodDateInput.value = today;
+
+            toggleCalendarButton.addEventListener('click', () => {
+                const isOpen = calendarContent.style.display === 'block';
+                calendarContent.style.display = isOpen ? 'none' : 'block';
+            });
+        });
+
         // Mobile/Touch specific listeners
         canvas.addEventListener('touchstart', startDrawing, false);
         canvas.addEventListener('touchmove', draw, false);
         canvas.addEventListener('touchend', stopDrawing, false);
         canvas.addEventListener('touchcancel', stopDrawing, false);
-    
+
         // Add touchmove listener only for canvas to prevent scrolling during draw
         canvas.addEventListener('touchmove', preventScrollDuringDrawing, { passive: false });
-    
+
         // Mouse events for desktop
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
