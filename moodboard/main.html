@@ -8,31 +8,45 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin: 20px;
+            margin: 10px;
+            padding: 0;
+        }
+        h1 {
+            font-size: 1.5em;
+            margin: 10px 0;
         }
         canvas {
             border: 1px solid black;
-            margin: 20px;
+            margin: 10px auto;
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            height: 300px;
         }
         .controls {
-            margin-top: 10px;
+            margin: 10px 0;
+        }
+        .controls input, .controls button {
+            font-size: 1em;
+            margin: 5px;
         }
         #calendar {
-            margin-top: 30px;
+            margin-top: 20px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
         }
         .calendar-day {
             border: 1px solid #ccc;
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             margin: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             position: relative;
+            overflow: hidden;
         }
         .calendar-day img {
             width: 100%;
@@ -59,10 +73,10 @@
 
     <input type="date" id="moodDate">
     
-    <canvas id="moodCanvas" width="300" height="300"></canvas>
+    <canvas id="moodCanvas"></canvas>
     
     <div class="controls">
-        <input type="text" id="moodName" placeholder="Tag your mood (optional)">
+        <input type="text" id="moodName" placeholder="Tag your mood (optional)" style="width: 80%;">
         <button id="saveMood">Save Mood</button>
         <button id="clearCanvas">Clear Canvas</button>
     </div>
@@ -80,25 +94,38 @@
 
         let drawing = false;
 
-        // Start drawing
-        canvas.addEventListener('mousedown', (e) => {
+        // Set up canvas for drawing (both mouse and touch)
+        canvas.width = 300;
+        canvas.height = 300;
+
+        function getCoordinates(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (event.touches ? event.touches[0].clientX : event.clientX) - rect.left;
+            const y = (event.touches ? event.touches[0].clientY : event.clientY) - rect.top;
+            return { x, y };
+        }
+
+        // Start drawing on mouse or touch down
+        function startDrawing(event) {
             drawing = true;
+            const { x, y } = getCoordinates(event);
             ctx.beginPath();
-            ctx.moveTo(e.offsetX, e.offsetY);
-        });
+            ctx.moveTo(x, y);
+        }
 
-        // Draw on canvas
-        canvas.addEventListener('mousemove', (e) => {
-            if (drawing) {
-                ctx.lineTo(e.offsetX, e.offsetY);
-                ctx.stroke();
-            }
-        });
+        // Draw on canvas as user moves finger or mouse
+        function draw(event) {
+            if (!drawing) return;
+            const { x, y } = getCoordinates(event);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
 
-        // Stop drawing
-        canvas.addEventListener('mouseup', () => {
+        // Stop drawing on mouse or touch up
+        function stopDrawing() {
             drawing = false;
-        });
+            ctx.closePath();
+        }
 
         // Clear the canvas
         clearButton.addEventListener('click', () => {
@@ -176,6 +203,18 @@
 
         // Load the calendar on page load
         document.addEventListener('DOMContentLoaded', renderCalendar);
+
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
     </script>
 </body>
 </html>
+
