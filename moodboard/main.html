@@ -105,8 +105,14 @@
             return { x, y };
         }
 
+        // Prevent scrolling on touch
+        function preventDefaultTouch(event) {
+            event.preventDefault();
+        }
+
         // Start drawing on mouse or touch down
         function startDrawing(event) {
+            event.preventDefault();
             drawing = true;
             const { x, y } = getCoordinates(event);
             ctx.beginPath();
@@ -116,15 +122,17 @@
         // Draw on canvas as user moves finger or mouse
         function draw(event) {
             if (!drawing) return;
+            event.preventDefault();
             const { x, y } = getCoordinates(event);
             ctx.lineTo(x, y);
             ctx.stroke();
         }
 
         // Stop drawing on mouse or touch up
-        function stopDrawing() {
+        function stopDrawing(event) {
             drawing = false;
             ctx.closePath();
+            event.preventDefault();
         }
 
         // Clear the canvas
@@ -210,11 +218,17 @@
         canvas.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('mouseout', stopDrawing);
 
-        // Touch events
-        canvas.addEventListener('touchstart', startDrawing);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('touchend', stopDrawing);
+        // Touch events with scrolling prevention
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing, { passive: false });
+
+        // Prevent default behavior for canvas touch events
+        canvas.addEventListener('touchstart', preventDefaultTouch, { passive: false });
+        canvas.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+        canvas.addEventListener('touchend', preventDefaultTouch, { passive: false });
     </script>
 </body>
 </html>
+
 
